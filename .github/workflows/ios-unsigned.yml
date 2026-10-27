@@ -4,20 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "lite=联网小包"
+        description: "lite=联网小包 / offline=离线大包"
         required: true
         default: "lite"
         type: choice
         options:
           - lite
+          - offline
 
 jobs:
   build:
     runs-on: macos-latest
-    timeout-minutes: 90
-    defaults:
-      run:
-        working-directory: gameios_repo_v1.2.1
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,10 +23,29 @@ jobs:
       - name: Install xcodegen
         run: brew install xcodegen
 
+      - name: Assemble web resources (offline mode)
+        if: ${{ inputs.mode == 'offline' }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          ls game_web.tar.part.* > /dev/null 2>&1 || { echo "没找到资源分块 game_web.tar.part.*，请先把 tar_parts 里的文件上传到仓库根目录"; exit 1; }
+          echo "拼接资源分块..."
+          cat game_web.tar.part.* > game_web.tar
+          tar -xf game_web.tar -C gameios_repo_v1.2.1
+          rm game_web.tar
+          test -f gameios_repo_v1.2.1/web/wz.html || { echo "web/wz.html 不存在，资源包内容不对"; exit 1; }
+          echo "资源解压完成: $(find gameios_repo_v1.2.1/web -type f | wc -l) 个文件"
+
       - name: Generate Xcode project
-        run: xcodegen generate --spec project-lite.yml
+        working-directory: gameios_repo_v1.2.1
+        run: |
+          if [ "${{ inputs.mode }}" = "offline" ]; then
+            xcodegen generate --spec project.yml
+          else
+            xcodegen generate --spec project-lite.yml
+          fi
 
       - name: Build app (unsigned)
+        working-directory: gameios_repo_v1.2.1
         run: |
           xcodebuild \
             -project Jiuzhou.xcodeproj \
@@ -41,19 +58,34 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
-            build 2>&1 | tail -30
+            build 2>&1 | tail -40
 
       - name: Package IPA
+        working-directory: gameios_repo_v1.2.1
         run: |
           APP="build/dd/Build/Products/Release-iphoneos/Jiuzhou.app"
           test -d "$APP" || { echo "编译产物不存在"; exit 1; }
           mkdir -p build/Payload
           cp -R "$APP" build/Payload/
-          cd build && zip -qrX Jiuzhou-lite-unsigned.ipa Payload
-          echo "IPA 大小: $(du -h Jiuzhou-lite-unsigned.ipa | cut -f1)"
+          cd build
+          if [ "${{ inputs.mode }}" = "offline" ]; then
+            zip -qrX Jiuzhou-unsigned.ipa Payload
+            echo "IPA 大小: $(du -h Jiuzhou-unsigned.ipa | cut -f1)"
+          else
+            zip -qrX Jiuzhou-lite-unsigned.ipa Payload
+            echo "IPA 大小: $(du -h Jiuzhou-lite-unsigned.ipa | cut -f1)"
+          fi
 
-      - name: Upload IPA
+      - name: Upload IPA (lite)
+        if: ${{ inputs.mode == 'lite' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Jiuzhou-ipa
+          name: Jiuzhou-ipa-lite
           path: gameios_repo_v1.2.1/build/Jiuzhou-lite-unsigned.ipa
+
+      - name: Upload IPA (offline)
+        if: ${{ inputs.mode == 'offline' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jiuzhou-ipa-offline
+          path: gameios_repo_v1.2.1/build/Jiuzhou-unsigned.ipa
