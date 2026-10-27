@@ -1,0 +1,46 @@
+name: Jiuzhou
+options:
+  bundleIdPrefix: com.jinlin
+  deploymentTarget:
+    iOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "14.0"
+    MARKETING_VERSION: "1.2.1"
+    CURRENT_PROJECT_VERSION: "4"
+    ENABLE_BITCODE: "NO"
+    ONLY_ACTIVE_ARCH: "NO"
+    CLANG_ENABLE_MODULES: "YES"
+    SWIFT_OPTIMIZATION_LEVEL: "-O"
+    GCC_OPTIMIZATION_LEVEL: "s"
+
+targets:
+  Jiuzhou:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+      # web 目录必须是 folder reference（蓝色文件夹）：
+      # 30951 个文件若逐个进编译/资源阶段，xcodebuild 会慢到无法忍受。
+      - path: web
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: Jiuzhou
+        PRODUCT_BUNDLE_IDENTIFIER: com.jinlin.jiuzhou
+        INFOPLIST_FILE: Support/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        # 把下面这行换成你的 Apple 开发者团队 ID（10 位，字母数字），
+        # 或者在 xcodebuild 命令里用 DEVELOPMENT_TEAM=xxx 覆盖。
+        DEVELOPMENT_TEAM: YOURTEAMID
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SUPPORTS_MACCATALYST: "NO"
+    scheme:
+      testTargets: []

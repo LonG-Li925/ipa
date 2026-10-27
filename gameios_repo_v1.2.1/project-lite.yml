@@ -1,0 +1,41 @@
+# 联网版（lite）工程描述：不打包 web/ 资源，App 只有几 MB。
+# 用 build_ios.sh 时会自动选择，不需要手动改这里。
+name: Jiuzhou
+options:
+  bundleIdPrefix: com.jinlin
+  deploymentTarget:
+    iOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "14.0"
+    MARKETING_VERSION: "1.2.1"
+    CURRENT_PROJECT_VERSION: "4"
+    ENABLE_BITCODE: "NO"
+    ONLY_ACTIVE_ARCH: "NO"
+    CLANG_ENABLE_MODULES: "YES"
+    SWIFT_OPTIMIZATION_LEVEL: "-O"
+    GCC_OPTIMIZATION_LEVEL: "s"
+
+targets:
+  Jiuzhou:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+    settings:
+      base:
+        PRODUCT_NAME: Jiuzhou
+        PRODUCT_BUNDLE_IDENTIFIER: com.jinlin.jiuzhou
+        INFOPLIST_FILE: Support/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: YOURTEAMID
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SUPPORTS_MACCATALYST: "NO"
+    scheme:
+      testTargets: []
